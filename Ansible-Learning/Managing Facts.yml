@@ -1,0 +1,28 @@
+Managing Facts:
+
+    Ansible facts are variables that are automatically discovered by Ansible on a managed host. Facts
+    contain host-specific information that can be used just like regular variables in plays, conditionals,
+    loops, or any other statement that depends on a value collected from a managed host.
+    Some of the facts gathered for a managed host might include:
+      • The host name
+      • The kernel version
+      • The network interfaces
+      • The IP addresses
+      • The version of the operating system
+      • Various environment variables
+      • The number of CPUs
+      • The available or free memory
+      • The available disk space
+    
+    Examples of Ansible Facts:
+      Fact Variable:
+      Short host name: ansible_facts['hostname']
+      Fully qualified domain name: ansible_facts['fqdn']
+      Main IPv4 address (based on routing): ansible_facts['default_ipv4']['address']
+      List of the names of all network interfaces: ansible_facts['interfaces']
+      Size of the /dev/vda1 disk partition: ansible_facts['devices']['vda']['partitions']['vda1']['size']
+      List of DNS servers: ansible_facts['dns']['nameservers']
+      Version of the currently running kernel: ansible_facts['kernel']
+  commands:
+
+    - ansible demo1.example.com -m setup - get value of all facts

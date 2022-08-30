@@ -1,0 +1,35 @@
+Running Ad Hoc Command:
+
+commands:
+
+  ansible host-pattern -m module [-a 'module arguments'] [-i inventory]
+
+Examples:
+  - ansible all -m ping
+  - ansible-doc ping - search the documentation for ping module
+  - ansible mymanagedhosts -m command -a /usr/bin/hostname
+  
+Ansible Modules:
+Files modules: 
+• copy: Copy a local file to the managed host
+• file: Set permissions and other properties of files
+• lineinfile: Ensure a particular line is or is not in a file
+• synchronize: Synchronize content using rsync
+Software package modules:
+• package: Manage packages using autodetected package
+manager native to the operating system
+• yum: Manage packages using the YUM package manager
+• apt: Manage packages using the APT package manager
+• dnf: Manage packages using the DNF package manager
+• gem: Manage Ruby gems
+• pip: Manage Python packages from PyPI
+System modules: 
+• firewalld: Manage arbitrary ports and services using
+firewalld
+• reboot: Reboot a machine
+• service: Manage services
+• user: Add, remove, and manage user accounts
+Net Tools modules: 
+• get_url: Download files over HTTP, HTTPS, or FTP
+• nmcli: Manage networking
+• uri: Interact with web services

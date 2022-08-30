@@ -1,0 +1,60 @@
+Inventories:
+
+  An inventory defines a collection of hosts that Ansible will manage. These hosts can also be
+assigned to groups, which can be managed collectively. Groups can contain child groups, and
+hosts can be members of multiple groups. The inventory can also set variables that apply to the
+hosts and groups that it defines
+Inventory Example:
+
+[webservers]
+web1.example.com
+web2.example.com
+192.0.2.42
+[db-servers]
+db1.example.com
+db2.example.com
+[east-datacenter]
+web1.example.com
+db1.example.com
+[west-datacenter]
+web2.example.com
+db2.example.com
+[production]
+web1.example.com
+web2.example.com
+db1.example.com
+db2.example.com
+[development]
+192.0.2.42
+
+Nested Groups Example:
+
+[usa]
+washington1.example.com
+washington2.example.com
+[canada]
+ontario01.example.com
+ontario02.example.com
+[north-america:children]
+canada
+usa
+
+Simplifying Host Specifications with Ranges:
+
+[usa]
+washington[1:2].example.com
+[canada]
+ontario[01:02].example.com
+
+Ansible inventory commands:
+
+  Your ansible command must include the -i inventory option. This makes
+ansible use your inventory file in the current working directory instead of the
+system /etc/ansible/hosts inventory file
+
+commands:
+  ansible all -i inventory --list-hosts
+  ansible ungrouped -i inventory --list-hosts
+  ansible development -i inventory --list-hosts
+
+

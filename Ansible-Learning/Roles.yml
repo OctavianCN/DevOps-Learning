@@ -1,0 +1,90 @@
+Ansible Roles:
+
+  An Ansible role is defined by a standardized structure of subdirectories and files. The top-level
+directory defines the name of the role itself.
+
+comands:
+
+  -  ansible-galaxy init /etc/ansible/roles/example - directory where ansible role is initialized
+
+[user@host roles]$ tree /etc/ansible/roles/example
+user.example/
+├── defaults
+│   └── main.yml
+├── files
+├── handlers
+│   └── main.yml
+├── meta
+│   └── main.yml
+├── README.md
+├── tasks
+│   └── main.yml
+├── templates
+├── tests
+│   ├── inventory
+│   └── test.yml
+└── vars
+    └── main.yml
+
+Subdirectory Function:
+  defaults: The main.yml file in this directory contains the default values of role
+            variables that can be overwritten when the role is used. These variables
+            have low precedence and are intended to be changed and customized in
+            plays.
+  files:    This directory contains static files that are referenced by role tasks.
+  handlers: The main.yml file in this directory contains the role's handler definitions.
+  meta:     The main.yml file in this directory contains information about the role,
+            including author, license, platforms, and optional role dependencies.
+  tasks:    The main.yml file in this directory contains the role's task definitions.
+            templates This directory contains Jinja2 templates that are referenced by role tasks.
+            tests This directory can contain an inventory and test.yml playbook that can be
+            used to test the role.
+  vars:     The main.yml file in this directory defines the role's variable values. Often
+            these variables are used for internal purposes within the role. These
+            variables have high precedence, and are not intended to be changed when
+            used in a playbook.
+
+Examples Roles Executions:
+
+  Example 1:
+
+    - name: Execute a role as a task
+      hosts: remote.example.com
+      tasks:
+        - name: A normal task
+          debug:
+            msg: 'first task'
+        - name: A task to include role2 here
+          include_role: role2
+  
+  Example 2:
+    
+    - name: Play to illustrate order of execution
+      hosts: remote.example.com
+      pre_tasks:
+        - debug:
+          msg: 'pre-task'
+          notify: my handler
+      roles:
+        - role1
+      tasks:
+        - debug:
+            msg: 'first task'
+          notify: my handler
+      post_tasks:
+        - debug:
+            msg: 'post-task'
+          notify: my handler
+      handlers:
+        - name: my handler
+          debug:
+            msg: Running my handler
+  
+  Example 3:
+    ---
+    - hosts: remote.example.com
+    roles:
+      - role: role1
+      - { role: role2, var1: val1, var2: val2 }
+
+    

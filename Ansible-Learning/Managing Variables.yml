@@ -1,0 +1,112 @@
+Managing Variables:
+
+    Naming Variables:
+        Variable names must start with a letter, and they can only contain letters, numbers, and
+      underscores.
+    
+    Here is a simplified list of ways to define a variable, ordered from lowest precedence to highest:
+      • Group variables defined in the inventory.
+      • Group variables defined in files in a group_vars subdirectory in the same directory as the
+        inventory or the playbook.
+      • Host variables defined in the inventory.
+      • Host variables defined in files in a host_vars subdirectory in the same directory as the
+        inventory or the playbook.
+      • Host facts, discovered at runtime.
+      • Play variables in the playbook (vars and vars_files).
+      • Task variables.
+      • Extra variables defined on the command line.
+  
+  Variables in Playbooks:
+    The directory structure for the example project, project, if it contained all the example files above, would appear as follows:
+          project
+          ├── ansible.cfg
+          ├── group_vars
+          │ ├── datacenters
+          │ ├── datacenters1
+          │ └── datacenters2
+          ├── host_vars
+          │ ├── demo1.example.com
+          │ ├── demo2.example.com
+          │ ├── demo3.example.com
+          │ └── demo4.example.com
+          ├── inventory
+          └── playbook.yml
+    
+    Use variables as arrays:
+      users:
+        bjones:
+          first_name: Bob
+          last_name: Jones
+          home_dir: /users/bjones
+        acook:
+          first_name: Anne
+          last_name: Cook
+          home_dir: /users/acook
+    You can then use the following variables to access user data:
+    # Returns 'Bob'
+      users.bjones.first_name
+    # Returns '/users/acook'
+      users.acook.home_dir
+
+    Example of using varibales:
+      ---
+      - name: Deploy and start Apache HTTPD service
+        hosts: webserver
+        vars:
+          web_pkg: httpd
+          firewall_pkg: firewalld
+          web_service: httpd
+          firewall_service: firewalld
+          python_pkg: python3-PyMySQL
+          rule: http
+        tasks:
+          - name: Required packages are installed and up to date
+            yum:
+            name:
+              - "{{ web_pkg }}"
+              - "{{ firewall_pkg }}"
+              - "{{ python_pkg }}"
+            state: latest
+          - name: The {{ firewall_service }} service is started and enabled
+            service:
+            name: "{{ firewall_service }}"
+            enabled: true
+            state: started
+          - name: The {{ web_service }} service is started and enabled
+            service:
+            name: "{{ web_service }}"
+            enabled: true
+            state: started
+          - name: Web content is in place
+          copy:
+          content: "Example web content"
+          dest: /var/www/html/index.html
+          - name: The firewall port for {{ rule }} is open
+          firewalld:
+          100 RH294-RHEL8.4-en-1-20210818
+          Chapter 3 | Managing Variables and Facts
+          service: "{{ rule }}"
+          permanent: true
+          immediate: true
+          state: enabled
+      - name: Verify the Apache service
+        hosts: localhost
+        become: false
+        tasks:
+          - name: Ensure the webserver is reachable
+            uri:
+              url: http://servera.lab.example.com
+              status_code: 200
+
+    Example using variables for debug:
+      ---
+      - name: Installs a package and prints the result
+        hosts: all
+        tasks:
+          - name: Install the package
+            yum:
+              name: httpd
+              state: installed
+              register: install_result
+          - debug:
+            var: install_result
