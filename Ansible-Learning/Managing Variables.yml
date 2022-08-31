@@ -69,26 +69,24 @@ Managing Variables:
             state: latest
           - name: The {{ firewall_service }} service is started and enabled
             service:
-            name: "{{ firewall_service }}"
-            enabled: true
-            state: started
+                name: "{{ firewall_service }}"
+                enabled: true
+                state: started
           - name: The {{ web_service }} service is started and enabled
             service:
-            name: "{{ web_service }}"
-            enabled: true
-            state: started
+                name: "{{ web_service }}"
+                enabled: true
+                state: started
           - name: Web content is in place
-          copy:
-          content: "Example web content"
-          dest: /var/www/html/index.html
+            copy:
+              content: "Example web content"
+              dest: /var/www/html/index.html
           - name: The firewall port for {{ rule }} is open
-          firewalld:
-          100 RH294-RHEL8.4-en-1-20210818
-          Chapter 3 | Managing Variables and Facts
-          service: "{{ rule }}"
-          permanent: true
-          immediate: true
-          state: enabled
+            firewalld:
+              service: "{{ rule }}"
+              permanent: true
+              immediate: true
+              state: enabled
       - name: Verify the Apache service
         hosts: localhost
         become: false
