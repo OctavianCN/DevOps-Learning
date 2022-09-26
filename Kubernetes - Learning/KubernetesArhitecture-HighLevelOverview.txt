@@ -1,0 +1,141 @@
+Kubernetes Arhitecture:
+
+
+- Master Nodes: Manage, Plan, Schedule, Monitor Nodes
+        
+        -> kube-apiserver:
+              - Is the primary management component in kubernetes
+              - When a change is requested the kube-apiserver is responsible for:
+                    - User Authentification
+                    - Validate Request 
+                    - Retrive data 
+                    - Update ETCD 
+                    - Talk to the scheduler
+                    - Talk to the kubelet
+              - Installation: - kube-apiserver is available as a binary (download, run and configure it)
+                                can see the options inspecting the service
+                                cat /etc/systmed/system/kube-apiserver.service
+                                ps -aux | grep kube-apiserver - see the process
+                              - kubeadm deploy kube-apiserver as a pode in kube-system namespace on the master node
+                                can see the options of kube-apiserver located on the:
+                                cat /etc/kubernetes/manifests/kube-apiserver
+        -> etcd cluster:
+
+                ETCD:
+                    - is a distributed reliable key-value store
+                        thatis Simple, Secure & Fast
+                     -  Install etcd -> Download Binaries
+                                     -> Extract
+                                     -> Run ETCD service (./etcd)
+                                            - when you run etcd it starts a service that runs on port 2379 by default
+                     - After ETCD is installed you can attach any clients to the etcd service to store and retrive information (default client: etcdctl)
+                     ./etcdctl set key1 value1 -> creates an entry in the database
+                     ./etcdctl get key1 -> retrive stored data
+                     ./etcdctl -> view more options
+
+                ETCD in Kubernetes:
+                    - ETCD datastore stores information regarding the cluster
+                      such as the nodes, pods, configs, secrets, accounts, role bindings and others
+                    - every change you make to your cluster, such as adding additional nodes, deploying pods or replica sets are updated in the ETCD server. 
+                      Only once it is updated in the ETCD server, is the change considered complete.
+                    - Depending on how you setup your cluster, ETCD is deployed
+                      differently.
+                      Example:
+                        - Manual Deployment (From scratch): - download etcd binary and configure it.
+                        - Using kubeadm tool: - kubeadm deploy etcd as a pod in kube-system namespace on the master node
+                                              - to list all keys stored by Kubernetes use:
+                                              kubectl exec etcd-master -n kube-system etcdctl get / --prefix -key-only
+                                              - Kubernetes stores data in a specific directory structure: -> Registry: -> minions
+                                                                                                                       -> pods
+                                                                                                                       -> replicasets
+                                                                                                                       -> deployments
+                                                                                                                       -> roles
+                                                                                                                       -> etc.
+
+        -> kube Controller Manager
+                  - a controller is a process that continuosly monitors the state of various components within the system
+                  Ex. Node-Controller - check status of the nodes (every 5 s)
+                      Replication-Controller - are responsible for replica sets
+                      etc. - there are many more controllers
+                    Are all package into a single process kube-controller-manager 
+                    When installed through kubeadm:
+                        - kube-controller-manager is a pod inside kube-systeme ( kube-controller-manager-master)
+                    When installed using other method:
+                        - cat /etc/systemd/system/kube-controller-manager.service
+                        - ps -aux | grep kube-controller-manager
+        -> kube-scheduler
+                    - responsible of deciding which pod goes where (the kubelet actually put the pod)
+                    Install it (download binary, extract, run the process)
+                        check: cat /etc/kubernetes/manifests/kube-scheduler.yaml
+                                ps -aux | grep kube-scheduler
+                                with kubeadm: it is a pod in kube-system namespace
+        -> Container Runtime Engine
+
+- Worker Nodes: Host Application as Containers
+        -> kubelet
+            - Responsabilities: Register Node, Create Pod, Monitor Node & pods
+            Install it:
+                  - with kubeadm it does not automatically deploy kubelet
+                  - download installer, extract, run
+                  ps -aux | grep kubelet
+        -> kube-proxy
+            - is a process that runs in each node in a kubernetes cluster
+            - its job is to look for new services and every time a new service is created it creates
+              the appropiate rules on each node to forward traffic to the backend pods (using IPtables)
+            Install it:
+              - download binary, extract it, run it
+              - kubeadm tool deploys kube-proxy as pod on each node(as a deamonset)
+        -> Container Runtime Engine
+
+Controllers:
+  Replication Controller:
+  Replica Set:
+      - replica set can also manage pods that are matched by selector field it its yaml file (this is a major difference between replication controller and replica set)
+
+Deployments:
+  - deployments create automatically a replica set
+
+Services:
+  - enable communication between various components within and outside of the application
+  - Three types of services:
+            - NodePort
+                  YAML file definition:
+                       apiversion: v1 
+                       kind: Service 
+                       metadata:
+                          name: myapp-service 
+                       spec: 
+                          types: NodePort
+                          ports:
+                            - targetPort: 80 - the port from the pod (where actual webserver is running)(if not specified the targetPort will be equal to port)
+                              *port: 80 - port of the service (the service is like a virtual server inside the node) (should be specified)
+                              nodePort: 30008 - port in range 30000-32767 on the node (if this is not present the nodePort will be a random one in range 30000-32767)
+                          selector:
+                            app: myapp
+                            type: front-end
+                  
+            - Cluster Ip
+                  Used to group all pods to a service(example for multiple backend pods it is created just one service)
+                   YAML file definition:
+                       apiversion: v1 
+                       kind: Service 
+                       metadata:
+                          name: backend-service 
+                       spec: 
+                          types: ClusterIp
+                          ports:
+                            - targetPort: 80
+                              port: 80
+                          selector:
+                            app: myapp
+                            type: backend-end
+            - Load Balancer
+    
+DNS for Services and Pods
+
+service_name.my-namespace.svc.cluster.local
+service_name.my-namespace
+
+pod-ip-address.my-namespace.pod.cluster-domain.example
+  
+

@@ -1,0 +1,253 @@
+Manual Scheduling:
+        - when no schedule is available you can specify the nodeName (if the pod is not already created):
+
+                ---
+                apiVersion: v1
+                kind: Pod
+                metadata:
+                name: nginx
+                spec:
+                containers:
+                -  image: nginx
+                    name: nginx
+                nodeName: node01
+
+        - if the pod is already created another way to assign a pod to a node is to create a binding object
+
+                ---
+                apiVersion: v1
+                kind: Binding
+                metadata:
+                name: nginx
+                target:
+                apiVersion: v1
+                kind: Node
+                name: node01
+
+Taint and Tolerations:
+
+  kubectl taint nodes node-name key=value:taint-effect
+  taint-effect: - NoSchedule - the pods will not be scheduled on the node
+                - PreferNoSchedule - system will try to avoid placing a pod to the node (not guaranteed)
+                - NoExecute - means new pods will not be scheduled and the existing pods will be evicted if they don't have any toleration 
+
+      Tolerations:
+          ---
+          apiVersion: v1
+          kind: Pod
+          metadata:
+          name: bee
+          spec:
+          containers:
+          - image: nginx
+            name: bee
+          tolerations:
+          - key: spray
+            value: mortein
+            effect: NoSchedule
+            operator: equal
+          ---
+          apiVersion: v1
+          kind: Pod
+          metadata:
+          name: nginx
+          labels:
+              env: test
+          spec:
+          containers:
+          - name: nginx
+            image: nginx
+            imagePullPolicy: IfNotPresent
+          tolerations:
+          - key: "example-key"
+            operator: "Exists"
+            effect: "NoSchedule"
+      A toleration maches a taint if the keys are the same and the effect are the same, and:
+          - the operator is Exists (in which case no value should be specified)
+          - the operator is Equal and the values are equal
+
+  Note:
+  There are two special cases:
+  - An empty key with operator Exists matches all keys, values and effects which means this will tolerate everything.
+  - An empty effect matches all effects with key key1.
+
+  For example, imagine you taint a node like this
+
+      kubectl taint nodes node1 key1=value1:NoSchedule
+      kubectl taint nodes node1 key1=value1:NoExecute
+      kubectl taint nodes node1 key2=value2:NoSchedule
+      And a pod has two tolerations:
+
+      tolerations:
+      - key: "key1"
+      operator: "Equal"
+      value: "value1"
+      effect: "NoSchedule"
+      - key: "key1"
+      operator: "Equal"
+      value: "value1"
+      effect: "NoExecute"
+      In this case, the pod will not be able to schedule onto the node,
+      because there is no toleration matching the third taint.
+      But it will be able to continue running if it is already running 
+      on the node when the taint is added, because the third taint is the only one of the three that is not tolerated by the pod.
+
+      Normally, if a taint with effect NoExecute is added to a node, then any pods that do not tolerate the taint will be evicted immediately, 
+      and pods that do tolerate the taint will never be evicted. However, a toleration with NoExecute effect can specify an optional tolerationSeconds 
+      field that dictates how long the pod will stay bound to the node after the taint is added. For example,
+
+      tolerations:
+      - key: "key1"
+      operator: "Equal"
+      value: "value1"
+      effect: "NoExecute"
+      tolerationSeconds: 3600
+      means that if this pod is running and a matching taint is added to the node, then the pod will stay bound to the node for 3600 seconds, 
+      and then be evicted. If the taint is removed before that time, the pod will not be evicted.
+
+  Master Node - have a taint of NoSchedule by default
+
+
+Node Affinity:
+
+  Node affinity is conceptually similar to nodeSelector, allowing you to constrain which nodes 
+  your Pod can be scheduled on based on node labels. There are two types of node affinity:
+
+  requiredDuringSchedulingIgnoredDuringExecution: The scheduler can't schedule the Pod unless 
+                                                  the rule is met. This functions like nodeSelector, but with a more expressive syntax.
+  preferredDuringSchedulingIgnoredDuringExecution: The scheduler tries to find a node that meets the rule. 
+                                                  If a matching node is not available, the scheduler still schedules the Pod.
+
+
+  You can use the operator field to specify a logical operator for Kubernetes to use when interpreting
+  the rules. You can use In, NotIn, Exists, DoesNotExist, Gt and Lt.
+
+  NotIn and DoesNotExist allow you to define node anti-affinity behavior. 
+                        Alternatively, you can use node taints to repel Pods from specific nodes.
+  
+  You can specify a weight between 1 and 100 for each instance of the preferredDuringSchedulingIgnoredDuringExecution affinity type. 
+  Examples:
+
+  ---
+  apiVersion: apps/v1
+  kind: Deployment
+  ...
+      spec:
+        containers:
+        - image: nginx
+          imagePullPolicy: Always
+          name: nginx
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: color
+                  operator: In
+                  values:
+                  - blue
+
+  ---
+  apiVersion: apps/v1
+  kind: Deployment
+  ...
+  spec:
+    replicas: 2
+    selector:
+      matchLabels:
+        run: nginx
+    template:
+      metadata:
+        labels:
+          run: nginx
+      spec:
+        containers:
+        - image: nginx
+          imagePullPolicy: Always
+          name: nginx
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: node-role.kubernetes.io/master
+                  operator: Exists
+
+Request and Limits:
+
+  When you specify the resource request for containers in a Pod, the kube-scheduler 
+  uses this information to decide which node to place the Pod on. When you specify a resource limit 
+  for a container, the kubelet enforces those limits so that the running container is not allowed to 
+  use more of that resource than the limit you set. The kubelet also reserves at least the request 
+  amount of that system resource specifically for that container to use.
+
+DaemonSets:
+
+  A DaemonSet ensures that all (or some) Nodes run a copy of a Pod. As nodes are added to the cluster, 
+  Pods are added to them. As nodes are removed from the cluster, those Pods are garbage collected. 
+  Deleting a DaemonSet will clean up the Pods it created.
+
+  Some typical uses of a DaemonSet are:
+
+  - running a cluster storage daemon on every node
+  - running a logs collection daemon on every node
+  - running a node monitoring daemon on every node
+  In a simple case, one DaemonSet, covering all nodes, would be used for each type of daemon.
+  A more complex setup might use multiple DaemonSets for a single type of daemon, but with different
+  flags and/or different memory and cpu requests for different hardware types.
+
+  DeamonSets - ignored by the Kube-Scheduler
+  ---
+  apiVersion: apps/v1
+  kind: DaemonSet
+  metadata:
+    labels:
+      app: elasticsearch
+    name: elasticsearch
+    namespace: kube-system
+  spec:
+    selector:
+      matchLabels:
+        app: elasticsearch
+    template:
+      metadata:
+        labels:
+          app: elasticsearch
+      spec:
+        containers:
+        - image: k8s.gcr.io/fluentd-elasticsearch:1.20
+          name: fluentd-elasticsearch
+
+
+Static Pods:
+
+  Kubelet know to create pods. The details of the pod definition file exists on the 
+  host in a designated directory (by default /etc/kubernetes/manifests) - the kubelet periodically
+  checks this directory for files, reads this files and creates pods. It also ensures that the pods stays alive 
+  if the app crashes, the kubelet attempts to restart it. If you make changes to the file the kubelet change the pod, If you
+  delete the file, the kubelete deletes the pod. (this are static pods)
+
+  The folder can be any directory on the host and is passed as an option while running the service. (--pod-manifest-path)
+  You can also specify a path to a config path (--config=kubeconfig.yaml) and can use in this file (staticPodPath: /etc/kubernetes/manifests)
+
+  Example of use case of static pods: - kubeadm tool sets up a kubernetes cluster by deploying (apiserver, etcd,controller manager as static pods)
+  apiserver-controlplane - example of static pod
+  name_of_pod-node_name - example of static pod
+
+  Static Pods - Ignored by the Kube-Scheduler
+
+Multiple Schedulers:
+
+  In a kubernetes cluster you can use multiple Schedulers (you can make them as pods)
+
+  ---
+  apiVersion: v1 
+  kind: Pod 
+  metadata:
+    name: nginx 
+  spec:
+    schedulerName: my-scheduler - select what scheduler the pod should use
+    containers:
+    - image: nginx
+      name: nginx
+

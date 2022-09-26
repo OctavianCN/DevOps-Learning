@@ -1,0 +1,170 @@
+kubectl run nginx --image nginx - deploy a docker container by creating a pod
+                                  the application image is from dockerhub in this creates
+
+kubectl get pods
+kubectl describe pod pod_name
+
+kubectl create -f definitionFile.yaml
+
+kubectl replace -f replicaset-definition.yml
+kubectl scale --replicas=6 replicaset-definition.yml
+kubectl scale --replicas=6 replicaset myapp-replicaset
+
+kubectl get replicaset
+kubectl delete replicaset my_replicaset - also deletes all underlying pods
+
+kubectl get all - get all created objects
+
+kubectl create namespace name_namespace
+kubectl config set-conetext $(kubectl config current-context) --namespace=dev
+kubectl config set-context --current --namespace=finance - change current namespace
+kubectl config view --minify | grep namespace - see current context
+kubectl get pods --all-Namespaces
+kubectl config current-context - indentify current context 
+
+kubectl expose deployment nginx --port 80 -create a service
+
+Create Objects:
+Imperative:
+
+kubectl run 
+kubectl create 
+kubectl expose 
+
+Declerative:
+
+kubectl apply -f aa.yml
+
+
+Update Objects
+
+Imperative:
+
+kubectl edit 
+kubectl scale 
+kubectl set image
+
+Declerative:
+
+kubectl apply -f aa.yml - when you change the yml files
+
+
+--dry-run - this will not create the resource, instead, tell you whether the resource can be created and if your command is right
+-o yaml - output the resource definition in YAML format
+kubectl run nginx --image=nginx --dry-run=client -o yaml - generate pod manifest yaml file
+kubectl expose pod redis --port=6379 --name redis-service --dry-run=client -o yaml - create service named redis-service (it will use the pods labels as selectors)
+kubectl create service clusterip redis --tcp=6379:6379 --dry-run=client -o yaml - this will not use the pods selector as labels
+kubectl expose pod nginx --type=NodePort --port=80 --name=nginx-service --dry-run=client -o yaml - create a service of type NodePort
+kubectl create service nodeport nginx --tcp=80:80 --node-port=30080 --dry-run=client -o yaml - create a service of type node port
+
+kubectl explain resource - list the fileds,version etc for a specific resource
+
+
+Labels and Selectors:
+
+kubectl get pods --selector env=dev   - get pods by labels
+kubectl get all --selector env=prod --no-headers - get all objects in prod environment
+kubectl get all --selector env=prod,bu=finance,tier=frontend - get pods with multiple selectors
+
+
+Scheduling:
+
+Taint and Tolerations:
+
+Create Taint:
+    kubectl taint nodes node01 spray=mortein:NoSchedule
+    kubecyl taint nodes node_name key=value:effect
+    kubectl taint nodes controlplane node-role.kubernetes.io/master:NoSchedule- -untaint the node( the - sign represent untaint)
+Create Tolerations:
+    ---
+    apiVersion: v1
+    kind: Pod
+    metadata:
+    name: bee
+    spec:
+    containers:
+    - image: nginx
+        name: bee
+    tolerations:
+    - key: spray
+        value: mortein
+        effect: NoSchedule
+        operator: Equal
+
+Node Affinity:
+
+kubectl get node node01 --show-labels - show labels of a node
+kubectl label node node01 color=blue - adding labels to a node
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blue
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      run: nginx
+  template:
+    metadata:
+      labels:
+        run: nginx
+    spec:
+      containers:
+      - image: nginx
+        imagePullPolicy: Always
+        name: nginx
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: color
+                operator: In
+                values:
+                - blue
+
+Daemon Sets:
+
+kubectl get daemonsets --all-namespaces - view all daemonsets
+
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app: elasticsearch
+  name: elasticsearch
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+    spec:
+      containers:
+      - image: k8s.gcr.io/fluentd-elasticsearch:1.20
+        name: fluentd-elasticsearch
+
+Multiple Schedulers:
+
+kubectl create -n kube-system configmap my-scheduler-config --from-file=/root/my-scheduler-config.yaml - create config map from file
+
+
+Monitoring & Logging:
+
+  Monitoring:
+
+    git clone https://github.com/kodekloudhub/kubernetes-metrics-server.git - deploy metric server to momitor the pods and nodes
+    cd kubernetes-metric-server ; kubectl create -f .
+    kubectl top node
+    kubectl top pods
+  
+  Logging
+
+    kubectl logs pod_name
+    kubectl logs pod_name -c container_name

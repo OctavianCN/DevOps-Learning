@@ -1,0 +1,11 @@
+  Monitoring:
+
+    git clone https://github.com/kodekloudhub/kubernetes-metrics-server.git - deploy metric server to momitor the pods and nodes
+    cd kubernetes-metric-server ; kubectl create -f .
+    kubectl top node
+    kubectl top pods
+  
+  Logging
+
+    kubectl logs pod_name
+    kubectl logs pod_name -c container_name
