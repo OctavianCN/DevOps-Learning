@@ -58,6 +58,7 @@ Initialize Kubeadm on Master Node(only on Master Node)
 #Execute the below command as root user to initialize Kubernetes Master node.
 sudo su -
 kubeadm init --config kube-cofig.yaml
+kubectl init --skip-phases=addon/kube-proxy --config kube-config.yaml
 
 kube-config.yaml
 ---
