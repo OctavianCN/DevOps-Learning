@@ -97,7 +97,7 @@ Go to Master and type the below command
 kubectl get nodes
 the above command should display both Master and worker nodes.
 
-
+################################################################################################
 Helm install:
 
 curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
@@ -106,6 +106,7 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.
 sudo apt-get update
 sudo apt-get install helm
 
+###################################################################################################
 Cilium CNI:
 
 https://docs.cilium.io/en/stable/gettingstarted/k8s-install-helm/
@@ -114,7 +115,15 @@ helm repo add cilium https://helm.cilium.io/
 helm install cilium cilium/cilium --version 1.12.2 \
   --namespace kube-system
 
+######################################################################################################
+Kubeadm Additional Commands (https://computingforgeeks.com/join-new-kubernetes-worker-node-to-existing-cluster/#:~:text=The%20kubeadm%20join%20command%20is%20used%20to%20bootstrap,flags%20required%20are%3A%20--token%20string%3A%20Token%20to%20use.):
 
+kubeadm token list
+sudo kubeadm token create
+kubeadm token list
+kubeadm token create --print-join-command
+
+#######################################################################################################
 The connection to the server 192.168.100.92:6443 was refused
 
 https://stackoverflow.com/questions/56737867/the-connection-to-the-server-x-x-x-6443-was-refused-did-you-specify-the-right
