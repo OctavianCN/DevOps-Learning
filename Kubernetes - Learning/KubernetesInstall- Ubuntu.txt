@@ -42,6 +42,7 @@ usermod -aG docker user
 systemctl restart docker
 systemctl enable docker.service
 
+exit
 Type exit to come out of root user.
 Install Kubernetes Modules
 sudo apt-get install -y kubelet kubeadm kubectl kubernetes-cni
